@@ -4,7 +4,7 @@
       {
         "label": "build",
         "type": "shell",
-        "command": "cmake --build ${workspaceFolder}/build",
+        "command": "${workspaceFolder}/shaders/compile.bat; cmake --build ${workspaceFolder}/build",
         "group": {
           "kind": "build",
           "isDefault": true
