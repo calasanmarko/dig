@@ -12,6 +12,8 @@ find_package(Stb REQUIRED)
 
 add_executable(Dig main.cpp)
 
+target_include_directories(Dig PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
 target_link_libraries(Dig Vulkan::Vulkan)
 target_link_libraries(Dig glm::glm)
 target_link_libraries(Dig glfw)
