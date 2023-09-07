@@ -9,7 +9,7 @@ void Game::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, uin
     renderPassInfo.renderArea.offset = vk::Offset2D();
     renderPassInfo.renderArea.extent = swapChainExtent;
 
-    vk::ClearValue clearColor({0.2f, 0.2f, 0.0f, 1.0f});
+    vk::ClearValue clearColor({0.1f, 0.1f, 0.1f, 1.0f});
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
