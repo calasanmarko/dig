@@ -18,6 +18,36 @@ BufferWithMemory::BufferWithMemory(Game* game, vk::DeviceSize size, vk::BufferUs
     buffer->bindMemory(**memory, 0);
 }
 
+BufferWithMemory Game::createStagedBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, void* data) {
+    BufferWithMemory stagingBuffer(this, size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    void *stagingData = stagingBuffer.memory->mapMemory(0, size);
+    memcpy(stagingData, data, size);
+    stagingBuffer.memory->unmapMemory();
+
+    auto result = BufferWithMemory(this, size, vk::BufferUsageFlagBits::eTransferDst | usage, properties);
+    copyBuffer(*stagingBuffer.buffer, *result.buffer, size);
+
+    return result;
+}
+
+void Game::createVertexBuffer() {
+    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    vertexBuffer = createStagedBuffer(bufferSize, vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, (void*)vertices.data());
+}
+
+void Game::createIndexBuffer() {
+    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    indexBuffer = createStagedBuffer(bufferSize, vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, (void*)indices.data());
+}
+
+void Game::createUniformBuffer() {
+    vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+
+    uniformBuffer = BufferWithMemory(this, bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+    uniformBufferMapped = uniformBuffer.memory->mapMemory(0, bufferSize);
+}
+
 uint32_t Game::findMemoryType(const vk::raii::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
     auto memoryProperties = physicalDevice.getMemoryProperties();
 

@@ -98,8 +98,7 @@ class Game {
     ~Game();
     void initWindow();
     void initVulkan();
-
-    // --- instance.cpp ---
+    void createSyncObjects();
     void createInstance();
     void createSurface();
 
@@ -132,19 +131,15 @@ class Game {
     void createTextureSampler();
     std::vector<char> readFile(const std::string& filename);
 
-    // --- shader_buffer.cpp ---
-    void createVertexBuffer();
-    void createIndexBuffer();
-    void createUniformBuffer();
-
     // --- descriptor.cpp ---
     void createDescriptorPool();
     void createDescriptorSets();
 
-    // --- sync.cpp ---
-    void createSyncObjects();
-
     // --- buffer.cpp ---
+    BufferWithMemory createStagedBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, void* data);
+    void createVertexBuffer();
+    void createIndexBuffer();
+    void createUniformBuffer();
     uint32_t findMemoryType(const vk::raii::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
     // --- command.cpp ---
