@@ -12,6 +12,7 @@ find_package(Stb REQUIRED)
 
 file(GLOB SOURCES
     include/*.h
+    src/**/*.cpp
     src/*.cpp
 )
 
