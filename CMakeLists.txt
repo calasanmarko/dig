@@ -10,7 +10,12 @@ find_package(glm CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 
-add_executable(Dig main.cpp)
+file(GLOB SOURCES
+    include/*.h
+    src/*.cpp
+)
+
+add_executable(Dig ${SOURCES})
 
 target_include_directories(Dig PRIVATE ${CMAKE_SOURCE_DIR}/include)
 

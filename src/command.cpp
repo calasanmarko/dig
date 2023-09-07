@@ -1,31 +1,52 @@
-#pragma once
-#include "includes.hpp"
+#include "game.hpp"
 
-vk::raii::CommandBuffer beginSingleTimeCommands(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool) {
+void Game::createCommandPool() {
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(**physicalDevice);
+
+    vk::CommandPoolCreateInfo poolInfo;
+    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    
+    commandPool = std::make_unique<vk::raii::CommandPool>(*device, poolInfo);
+}
+
+void Game::createCommandBuffer() {
     vk::CommandBufferAllocateInfo allocInfo;
-    allocInfo.commandPool = *commandPool;
+    allocInfo.commandPool = **commandPool;
     allocInfo.level = vk::CommandBufferLevel::ePrimary;
     allocInfo.commandBufferCount = 1;
 
-    auto commandBuffer = std::move(device.allocateCommandBuffers(allocInfo)[0]);
+    auto vkBuffer = static_cast<VkCommandBuffer>((**device).allocateCommandBuffers(allocInfo)[0]);
+    auto vkPool = static_cast<VkCommandPool>(**commandPool);
+    
+    commandBuffer = std::make_unique<vk::raii::CommandBuffer>(*device, vkBuffer, vkPool);
+}
+
+vk::raii::CommandBuffer Game::beginSingleTimeCommands() {
+    vk::CommandBufferAllocateInfo allocInfo;
+    allocInfo.commandPool = **commandPool;
+    allocInfo.level = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandBufferCount = 1;
+
+    auto commandBuffer = std::move(device->allocateCommandBuffers(allocInfo)[0]);
     commandBuffer.begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 
     return commandBuffer;
 }
 
-void endSingleTimeCommands(const vk::raii::Queue& presentQueue, const vk::raii::CommandBuffer& commandBuffer) {
+void Game::endSingleTimeCommands(const vk::raii::CommandBuffer& commandBuffer) {
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &*commandBuffer;
 
-    presentQueue.submit(submitInfo);
-    presentQueue.waitIdle();
+    presentQueue->submit(submitInfo);
+    presentQueue->waitIdle();
 }
 
-void transitionImageLayout(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& presentQueue, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
-    vk::raii::CommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+void Game::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+    vk::raii::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
     vk::ImageMemoryBarrier barrier;
     barrier.oldLayout = oldLayout;
@@ -61,11 +82,11 @@ void transitionImageLayout(const vk::raii::Device& device, const vk::raii::Comma
     }
 
     commandBuffer.pipelineBarrier(sourceStage, destinationStage, vk::DependencyFlags(), nullptr, nullptr, barrier);
-    endSingleTimeCommands(presentQueue, commandBuffer);
+    endSingleTimeCommands(commandBuffer);
 }
 
-void copyBufferToImage(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& presentQueue, const vk::raii::Buffer& buffer, vk::Image image, uint32_t width, uint32_t height) {
-    vk::raii::CommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+void Game::copyBufferToImage(const vk::raii::Buffer& buffer, vk::Image image, uint32_t width, uint32_t height) {
+    vk::raii::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
     vk::BufferImageCopy region;
     region.bufferOffset = 0;
@@ -79,11 +100,11 @@ void copyBufferToImage(const vk::raii::Device& device, const vk::raii::CommandPo
     region.imageSubresource.mipLevel = 0;
 
     commandBuffer.copyBufferToImage(*buffer, image, vk::ImageLayout::eTransferDstOptimal, {region});
-    endSingleTimeCommands(presentQueue, commandBuffer);
+    endSingleTimeCommands(commandBuffer);
 }
 
-void copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& presentQueue, const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size) {
-    auto commandBuffer = beginSingleTimeCommands(device, commandPool);
+void Game::copyBuffer(const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size) {
+    auto commandBuffer = beginSingleTimeCommands();
 
     vk::BufferCopy copyRegion;
     copyRegion.srcOffset = 0;
@@ -91,5 +112,5 @@ void copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& com
     copyRegion.size = size;
 
     commandBuffer.copyBuffer(*srcBuffer, *dstBuffer, {copyRegion});
-    endSingleTimeCommands(presentQueue, commandBuffer);
+    endSingleTimeCommands(commandBuffer);
 }
