@@ -22,7 +22,7 @@ void Game::createDescriptorSets() {
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &**descriptorSetLayout;
 
-    descriptorSet = std::make_unique<vk::raii::DescriptorSet>(*device, (**device).allocateDescriptorSets(allocInfo)[0], static_cast<VkDescriptorPool>(**descriptorPool));
+    descriptorSet = std::make_unique<vk::raii::DescriptorSet>(std::move(device->allocateDescriptorSets(allocInfo)[0]));
 
     vk::DescriptorBufferInfo bufferInfo;
     bufferInfo.buffer = **uniformBuffer.buffer;
